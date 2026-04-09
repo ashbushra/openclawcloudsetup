@@ -1,0 +1,23 @@
+FROM node:24-bullseye-slim
+
+# Install OS dependencies required for process monitoring
+RUN apt-get update && \
+    apt-get install -y procps jq && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/openclaw-admin
+
+# Install the OpenClaw agent globally
+RUN npm install -g openclaw@latest --quiet
+
+# Initialize package.json and install express dependencies
+RUN npm init -y && \
+    npm install express bcrypt express-session express-rate-limit
+
+# Copy app source
+COPY admin-server.js .
+COPY public/ ./public/
+
+EXPOSE 3000
+
+CMD ["node", "admin-server.js"]

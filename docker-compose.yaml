@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: openclaw-wg
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+      - SERVERURL=auto # Auto-detects public IP
+      - PEERS=1        # Generates config for 1 admin peer
+      - PEERDNS=1.1.1.1
+      - INTERNAL_SUBNET=10.0.0.0
+    ports:
+      - "51820:51820/udp"
+    volumes:
+      - ./config/wireguard:/config
+      - /lib/modules:/lib/modules
+    restart: unless-stopped
+
+  admin-server:
+    build: .
+    container_name: openclaw-admin
+    environment:
+      - TZ=America/Chicago
+    volumes:
+      - ./config/openclaw:/etc/openclaw
+      # Mount WG config to read the generated client keys
+      - ./config/wireguard:/etc/wireguard-ro:ro 
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: openclaw-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./config/openclaw/tls:/etc/openclaw/tls
+    restart: unless-stopped
+    depends_on:
+      - admin-server
