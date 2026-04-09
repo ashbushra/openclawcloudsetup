@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenClaw · Setup</title>
+<style>
+  :root {
+    --bg: #0f0f0f; --bg2: #1a1a1a; --bg3: #222;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+    --text: #e8e8e6; --muted: #888; --hint: #555;
+    --green: #1D9E75; --green2: #0F6E56; --blue: #378ADD;
+    --red: #E24B4A; --amber: #EF9F27;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  .container { width: 100%; max-width: 520px; }
+  .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 2.5rem; }
+  .logo-icon { font-size: 28px; }
+  .logo h1 { font-size: 15px; font-weight: 400; color: var(--text); letter-spacing: 0.05em; }
+  .logo p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .step-bar { display: flex; gap: 6px; margin-bottom: 2rem; }
+  .step-dot { height: 3px; flex: 1; background: var(--bg3); border-radius: 2px; transition: background 0.3s; }
+  .step-dot.active { background: var(--green); }
+  .step-dot.done { background: var(--green2); }
+
+  .card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 12px; padding: 1.75rem; margin-bottom: 1rem; }
+  .card-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.25rem; }
+
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; }
+  .field input, .field select {
+    width: 100%; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: 8px;
+    color: var(--text); font-family: inherit; font-size: 13px; padding: 10px 12px; outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--green); }
+  .field input[type=password] { letter-spacing: 0.08em; }
+  .field select option { background: var(--bg3); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .pw-strength { height: 3px; border-radius: 2px; margin-top: 6px; transition: all 0.3s; background: var(--bg3); }
+  .pw-hint { font-size: 10px; color: var(--hint); margin-top: 4px; }
+
+  .warning { background: rgba(239,159,39,0.1); border: 0.5px solid rgba(239,159,39,0.3); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--amber); margin-bottom: 1rem; display: flex; gap: 8px; }
+
+  .btn { width: 100%; padding: 12px; background: var(--green); border: none; border-radius: 8px; color: #fff; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.15s; letter-spacing: 0.03em; }
+  .btn:hover { background: var(--green2); }
+  .btn:disabled { background: var(--bg3); color: var(--hint); cursor: not-allowed; }
+
+  .error-msg { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 16px; }
+  .success-box { text-align: center; padding: 2rem; }
+  .success-box .check { font-size: 48px; margin-bottom: 1rem; }
+  .success-box h2 { font-size: 16px; color: var(--green); margin-bottom: 0.5rem; font-weight: 400; }
+  .success-box p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <div class="logo-icon">🦞</div>
+    <div>
+      <h1>openclaw · setup</h1>
+      <p>one-time bootstrap · this page self-destructs after setup</p>
+    </div>
+  </div>
+
+  <div class="step-bar">
+    <div class="step-dot active" id="dot-1"></div>
+    <div class="step-dot" id="dot-2"></div>
+    <div class="step-dot" id="dot-3"></div>
+  </div>
+
+  <div id="step-1">
+    <div class="card">
+      <div class="card-title">01 · create admin credentials</div>
+
+      <div class="field">
+        <label>Admin username</label>
+        <input type="text" id="username" placeholder="admin" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label>Password <span style="color:var(--hint)">(min 12 chars, not the default)</span></label>
+        <input type="password" id="password" placeholder="············" oninput="checkStrength(this.value)" />
+        <div class="pw-strength" id="pw-bar"></div>
+        <div class="pw-hint" id="pw-hint"></div>
+      </div>
+      <div class="field">
+        <label>Confirm password</label>
+        <input type="password" id="confirm-pw" placeholder="············" />
+      </div>
+
+      <div class="error-msg" id="creds-error"></div>
+      <button class="btn" onclick="submitCredentials()" style="margin-top:1rem">Set credentials →</button>
+    </div>
+  </div>
+
+  <div id="step-2" class="hidden">
+    <div class="card">
+      <div class="card-title">02 · openclaw configuration</div>
+
+      <div class="warning">
+        <span>⚠</span>
+        <span>Use API keys only — not Claude Max or ChatGPT Plus subscriptions. Those violate ToS when used via third-party agents.</span>
+      </div>
+
+      <div class="two-col">
+        <div class="field">
+          <label>Anthropic API key</label>
+          <input type="password" id="ant-key" placeholder="sk-ant-..." />
+        </div>
+        <div class="field">
+          <label>Kimi / Moonshot API key</label>
+          <input type="password" id="kimi-key" placeholder="sk-..." />
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Agent name</label>
+          <input type="text" id="agent-name" value="Claw" />
+        </div>
+        <div class="field">
+          <label>Primary channel</label>
+          <select id="channel">
+            <option value="telegram">Telegram</option>
+            <option value="discord">Discord</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="slack">Slack</option>
+          </select>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Timezone</label>
+          <select id="tz">
+            <option value="America/Chicago">America/Chicago</option>
+            <option value="America/New_York">America/New_York</option>
+            <option value="America/Los_Angeles">America/Los_Angeles</option>
+            <option value="UTC">UTC</option>
+            <option value="Europe/London">Europe/London</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Your IP for allowlist</label>
+          <input type="text" id="admin-ip" placeholder="auto-detect" />
+        </div>
+      </div>
+
+      <div class="error-msg" id="config-error"></div>
+      <button class="btn" onclick="submitConfig()">Deploy OpenClaw →</button>
+    </div>
+  </div>
+
+  <div id="step-3" class="hidden">
+    <div class="card success-box">
+      <div class="check">🦞</div>
+      <h2>OpenClaw is live.</h2>
+      <p>
+        Setup complete. This page has self-destructed.<br><br>
+        Connect your WireGuard client, then access the admin portal at<br>
+        <strong style="color:var(--green)">http://10.0.0.1/admin</strong><br><br>
+        Check your <code>config/wireguard/peer1</code> directory on the host for the client connection QR code and conf file.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOKEN = window.location.pathname.split('/setup/')[1];
+
+function checkStrength(pw) {
+  const bar = document.getElementById('pw-bar');
+  const hint = document.getElementById('pw-hint');
+  let score = 0;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const colors = ['#E24B4A','#EF9F27','#1D9E75','#0F6E56'];
+  const labels = ['too weak','fair','strong','very strong'];
+  bar.style.background = colors[score-1] || '#333';
+  bar.style.width = (score * 25) + '%';
+  hint.textContent = score > 0 ? labels[score-1] : '';
+}
+
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById(`step-${i}`).classList.toggle('hidden', i !== n);
+    const dot = document.getElementById(`dot-${i}`);
+    dot.classList.toggle('active', i === n);
+    dot.classList.toggle('done', i < n);
+  });
+}
+
+async function submitCredentials() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const confirm  = document.getElementById('confirm-pw').value;
+  const errEl    = document.getElementById('creds-error');
+  errEl.textContent = '';
+
+  const r = await fetch(`/setup/${TOKEN}/credentials`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password, confirmPassword: confirm })
+  });
+  const data = await r.json();
+  if (!r.ok) { errEl.textContent = data.error; return; }
+
+  try {
+    const ip = await fetch('https://api.ipify.org?format=json').then(r=>r.json()).then(d=>d.ip);
+    document.getElementById('admin-ip').value = ip;
+  } catch {}
+
+  setStep(2);
+}
+
+async function submitConfig() {
+  const errEl = document.getElementById('config-error');
+  errEl.textContent = '';
+
+  const body = {
+    anthropicKey: document.getElementById('ant-key').value.trim(),
+    kimiKey:      document.getElementById('kimi-key').value.trim(),
+    agentName:    document.getElementById('agent-name').value.trim(),
+    channel:      document.getElementById('channel').value,
+    timezone:     document.getElementById('tz').value,
+    adminIp:      document.getElementById('admin-ip').value.trim()
+  };
+
+  const btn = document.querySelector('#step-2 .btn');
+  btn.disabled = true;
+  btn.textContent = 'Deploying...';
+
+  const r = await fetch(`/setup/${TOKEN}/configure`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await r.json();
+
+  if (!r.ok) {
+    errEl.textContent = data.error;
+    btn.disabled = false;
+    btn.textContent = 'Deploy OpenClaw →';
+    return;
+  }
+
+  setStep(3);
+}
+</script>
+</body>
+</html>
