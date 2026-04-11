@@ -21,5 +21,5 @@ The stack is orchestrated via `docker-compose` and consists of three microservic
 
 **1. Clone the repository and navigate to the directory:**
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/ashbushra/openclawcloudsetup
 cd openclawcloud
